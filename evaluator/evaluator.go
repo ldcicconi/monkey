@@ -99,6 +99,14 @@ var (
 				return &object.Array{Elements: elems}
 			},
 		},
+		"puts": {
+			Fn: func(args ...object.Object) object.Object {
+				for _, arg := range args {
+					fmt.Println(arg.Inspect())
+				}
+				return NULL
+			},
+		},
 	}
 )
 
@@ -189,6 +197,8 @@ func Eval(node ast.Node, env *object.Environment) object.Object {
 			return index
 		}
 		return evalIndexExpression(left, index)
+	case *ast.HashLiteral:
+		return evalHashLiteral(node, env)
 	}
 
 	return nil
@@ -355,6 +365,8 @@ func evalIndexExpression(left, index object.Object) object.Object {
 	switch {
 	case left.Type() == object.ARRAY_OBJ && index.Type() == object.INTEGER_OBJ:
 		return evalArrayIndexExpression(left.(*object.Array), index.(*object.Integer))
+	case left.Type() == object.HASH_OBJ:
+		return evalHashIndexExpression(left, index)
 	default:
 		return newError("index operator not supported: %s", left.Type())
 	}
@@ -366,6 +378,22 @@ func evalArrayIndexExpression(left *object.Array, index *object.Integer) object.
 	}
 
 	return left.Elements[index.Value]
+}
+
+func evalHashIndexExpression(left, index object.Object) object.Object {
+	hash := left.(*object.Hash)
+
+	key, ok := index.(object.Hashable)
+	if !ok {
+		return newError("unusable as hash key: %s", index.Type())
+	}
+
+	pair, ok := hash.Pairs[key.HashKey()]
+	if !ok {
+		return NULL
+	}
+
+	return pair.Value
 }
 
 func evalIfExpression(ie *ast.IfExpression, env *object.Environment) object.Object {
@@ -415,4 +443,32 @@ func evalExpressions(exps []ast.Expression, env *object.Environment) []object.Ob
 		result = append(result, evaled)
 	}
 	return result
+}
+
+func evalHashLiteral(hash *ast.HashLiteral, env *object.Environment) object.Object {
+	pairs := make(map[object.HashKey]object.HashPair)
+
+	for keyExp, valExp := range hash.Pairs {
+		key := Eval(keyExp, env)
+		if isError(key) {
+			return key
+		}
+
+		hashKey, ok := key.(object.Hashable)
+		if !ok {
+			return newError("unusable as hash key: %s", key.Type())
+		}
+
+		val := Eval(valExp, env)
+		if isError(val) {
+			return val
+		}
+
+		pairs[hashKey.HashKey()] = object.HashPair{
+			Key:   key,
+			Value: val,
+		}
+	}
+
+	return &object.Hash{Pairs: pairs}
 }

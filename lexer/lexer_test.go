@@ -43,7 +43,8 @@ func TestNextToken(t *testing.T) {
 					10 != 9;
 					"foobar"
 					"foo bar"
-					[1, 2];			
+					[1, 2];
+					{"foo": "bar"}
 `,
 			expectedTokens: []token.Token{
 				{Type: token.LET, Literal: "let"},
@@ -127,6 +128,11 @@ func TestNextToken(t *testing.T) {
 				{token.INT, "2"},
 				{token.RBRACKET, "]"},
 				{token.SEMICOLON, ";"},
+				{token.LBRACE, "{"},
+				{token.STRING, "foo"},
+				{token.COLON, ":"},
+				{token.STRING, "bar"},
+				{token.RBRACE, "}"},
 				{Type: token.EOF, Literal: ""},
 			},
 		},

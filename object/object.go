@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/ldcicconi/monkey-interpreter/ast"
+	"hash/fnv"
 	"strings"
 )
 
@@ -19,6 +20,7 @@ const (
 	STRING_OBJ       = "STRING"
 	BUILTIN_OBJ      = "BUILTIN_OBJ"
 	ARRAY_OBJ        = "ARRAY_OBJ"
+	HASH_OBJ         = "HASH_OBJ"
 )
 
 type Object interface {
@@ -26,8 +28,17 @@ type Object interface {
 	Inspect() string
 }
 
+type HashKey struct {
+	Type  ObjectType
+	Value uint64
+}
+
 type Integer struct {
 	Value int64
+}
+
+func (i Integer) HashKey() HashKey {
+	return HashKey{Type: i.Type(), Value: uint64(i.Value)}
 }
 
 func (i Integer) Type() ObjectType { return INTEGER_OBJ }
@@ -35,6 +46,15 @@ func (i Integer) Inspect() string  { return fmt.Sprintf("%d", i.Value) }
 
 type Boolean struct {
 	Value bool
+}
+
+func (b Boolean) HashKey() HashKey {
+	val := 0
+	if b.Value {
+		val = 1
+	}
+
+	return HashKey{Type: b.Type(), Value: uint64(val)}
 }
 
 func (b Boolean) Type() ObjectType { return BOOLEAN_OBJ }
@@ -88,6 +108,12 @@ type String struct {
 	Value string
 }
 
+func (s String) HashKey() HashKey {
+	h := fnv.New64a()
+	h.Write([]byte(s.Value))
+	return HashKey{Type: s.Type(), Value: h.Sum64()}
+}
+
 func (s String) Type() ObjectType { return STRING_OBJ }
 func (s String) Inspect() string  { return s.Value }
 
@@ -118,4 +144,31 @@ func (a *Array) Inspect() string {
 	builder.WriteString("]")
 
 	return builder.String()
+}
+
+type HashPair struct {
+	Key, Value Object
+}
+
+type Hash struct {
+	Pairs map[HashKey]HashPair
+}
+
+func (h Hash) Type() ObjectType { return HASH_OBJ }
+
+func (h Hash) Inspect() string {
+	var builder strings.Builder
+	pairs := make([]string, 0, len(h.Pairs))
+	for _, pair := range h.Pairs {
+		pairs = append(pairs, fmt.Sprintf("%s: %s",
+			pair.Key.Inspect(), pair.Value.Inspect()))
+	}
+	builder.WriteString("{")
+	builder.WriteString(strings.Join(pairs, ", "))
+	builder.WriteString("}")
+	return builder.String()
+}
+
+type Hashable interface {
+	HashKey() HashKey
 }
