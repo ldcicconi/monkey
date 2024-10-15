@@ -7,8 +7,9 @@ const (
 	ILLEGAL TokenType = "ILLEGAL"
 	EOF     TokenType = "EOF"
 
-	IDENT TokenType = "IDENT" // add, foobar, x, y, ...
-	INT   TokenType = "INT"   // 123456
+	IDENT  TokenType = "IDENT" // add, foobar, x, y, ...
+	INT    TokenType = "INT"   // 123456
+	STRING TokenType = "STRING"
 
 	ASSIGN   TokenType = "="
 	PLUS     TokenType = "+"
@@ -25,10 +26,12 @@ const (
 	COMMA     TokenType = ","
 	SEMICOLON TokenType = ";"
 
-	LPAREN TokenType = "("
-	RPAREN TokenType = ")"
-	LBRACE TokenType = "{"
-	RBRACE TokenType = "}"
+	LPAREN   TokenType = "("
+	RPAREN   TokenType = ")"
+	LBRACE   TokenType = "{"
+	RBRACE   TokenType = "}"
+	LBRACKET TokenType = "["
+	RBRACKET TokenType = "]"
 
 	FUNCTION TokenType = "FUNCTION"
 	LET      TokenType = "LET"

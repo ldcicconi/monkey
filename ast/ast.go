@@ -258,3 +258,55 @@ func (ce CallExpression) String() string {
 
 	return builder.String()
 }
+
+type StringLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (sl StringLiteral) expressionNode()      {}
+func (sl StringLiteral) TokenLiteral() string { return sl.Token.Literal }
+func (sl StringLiteral) String() string       { return sl.Token.Literal }
+
+type ArrayLiteral struct {
+	Token    token.Token
+	Elements []Expression
+}
+
+func (al ArrayLiteral) expressionNode()      {}
+func (al ArrayLiteral) TokenLiteral() string { return al.Token.Literal }
+func (al ArrayLiteral) String() string {
+	var builder strings.Builder
+
+	elements := make([]string, 0, len(al.Elements))
+	for _, e := range al.Elements {
+		elements = append(elements, e.String())
+	}
+	joined := strings.Join(elements, ", ")
+
+	builder.WriteString("[")
+	builder.WriteString(joined)
+	builder.WriteString("]")
+
+	return builder.String()
+}
+
+type IndexExpression struct {
+	Token token.Token
+	Left  Expression
+	Index Expression
+}
+
+func (i IndexExpression) expressionNode()      {}
+func (i IndexExpression) TokenLiteral() string { return i.Token.Literal }
+func (i IndexExpression) String() string {
+	var builder strings.Builder
+
+	builder.WriteString("(")
+	builder.WriteString(i.Left.String())
+	builder.WriteString("[")
+	builder.WriteString(i.Index.String())
+	builder.WriteString("])")
+
+	return builder.String()
+}
